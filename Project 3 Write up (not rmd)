@@ -24,11 +24,12 @@ Mohammad Rahman
 
 # Collaboration Tools
 WhatsApp: 
+Github: Code sharing 
+Zoom: We use this to meet weekly. 
 
 # Project 3 Approach
 
 The goal of the project is to use data to answer the question, “Which are the most valued data science skills?”. We decided to web scrap a major job search engines (ex: Indeed, Linkedin, Glassdoor, etc) for job postings. Create a large csv that contains job title, job URL, company name, job salary, and job description. Then, we will create a list of hard skills and soft skills, and find the top 5 most frequent hard skills and soft skills on the job postings. The most valued data science skills are the skills that appear most often on the job postings. 
-
 
 # Data Source
 
@@ -41,3 +42,4 @@ Plan B:
 If webscraping fail, we decide to use a dataset we found on Kaggle. The dataset contains job listings in US from Glassdoor. The CSV file contains Job title, salart estimate, job description, company name, company rating, company headquarters, company size, and more. 
 https://www.kaggle.com/datasets/nikhilbhathi/data-scientist-salary-us-glassdoor?resource=download
 https://github.com/PlayingNumbers/ds_salary_proj
+
