@@ -24,8 +24,8 @@ Mohammad Rahman
 
 # Collaboration Tools
 WhatsApp: 
-Github: Code sharing 
-Zoom: We use this to meet weekly. 
+Github: Repository for code sharing and write ups for markdown file
+Zoom: For online meeting as needed
 
 # Project 3 Approach
 
@@ -39,7 +39,13 @@ We decided to web scrap major job search engines (Indeed, Linkedin, Glassdoor, e
 https://github.com/suswong/DATA-607-Project-3
 
 Plan B: 
-If webscraping fail, we decide to use a dataset we found on Kaggle. The dataset contains job listings in US from Glassdoor. The CSV file contains Job title, salart estimate, job description, company name, company rating, company headquarters, company size, and more. 
+Use a dataset we found on Kaggle. The dataset contains job listings in US from Glassdoor. The CSV file contains Job title, salart estimate, job description, company name, company rating, company headquarters, company size, and more. 
 https://www.kaggle.com/datasets/nikhilbhathi/data-scientist-salary-us-glassdoor?resource=download
+
+We plan to use the raw file compiled by _____ to do our own tidying anf analysis.
 https://github.com/PlayingNumbers/ds_salary_proj
+
+# ER Diagram 
+
+# Database Plan
 
