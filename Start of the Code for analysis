@@ -19,6 +19,10 @@ technical_skills <- tidied_Linkedin[c('Job_title','Company','Job_location_City',
 
 technical <- c("Python","python","Python|python", "Java|java","JavaScript" ,"sql|SQL", "r|R", "sas|SAS","scala|Scala","MatLab|matlab|MATLAB", "C","C++", "Swift", "Julia|julia","Hadoop|hadoop","Spark|spark","Pig|pig","Tableau|tableau")
 
+OR
+
+#technical <- c("(?i)python", "(?i)java", "(?i)javascript", "(?i)sql", "(?i)\\bR\\b", "(?i)spss","(?i)stata", "(?i)sas","(?i)scala","(?i)matlab", "(?i)\\bC\\b","(?i)\\bC++\\b", "(?i)Swift")
+
 for(i in technical){
    technical_skills[i] <- +str_detect(apply(technical_skills, 1, paste0, collapse = " ",ignore_case = T), technical[which(technical == i)])
 ```
