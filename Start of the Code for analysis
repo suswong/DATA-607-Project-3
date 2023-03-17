@@ -11,7 +11,7 @@ output: html_document
 ```{r}
 library(stringr)
 
-tidied_Linkedin <- read.csv('https://raw.githubusercontent.com/suswong/DATA-607-Project-3/main/tidied_Linkedin_version3.csv')
+tidied_Linkedin <- read.csv('https://raw.githubusercontent.com/suswong/DATA-607-Project-3/main/tidied_Linkedin_version4.csv')
 colnames(tidied_Linkedin)
 technical_skills <- tidied_Linkedin[c('Job_title','Company','Job_location_City','Job_location_State','Seniority_level','Employment_type','Job_function','Industries','Job_description')]
 
