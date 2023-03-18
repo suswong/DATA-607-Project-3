@@ -1,0 +1,160 @@
+---
+title: "DATA 607 Project 3 Analysis"
+author: "Susanna Wong"
+date: "2023-03-15"
+output:
+  html_document:
+    theme: cerulean
+    code_folding: hide
+    toc: true
+    toc_float: true
+editor_options: 
+  markdown: 
+    wrap: sentence
+---
+
+# Introduction
+The goal of the project is to use data to answer the question, "Which are the most valued data science skills?".
+We web scrap a major job search engine (ex: Indeed, Linkedin, Glassdoor, etc) for job postings.
+Create a large csv file that contains the job title, job URL, company name, job salary, and job description.
+Then, we will create a list of technical skills, and soft skills, and find the top 5 most frequent technical skills and soft skills on the job postings.
+The most valued data science skills are the skills that appear most often on job postings.
+
+# Load the CSV file
+
+We webscrap job postings from LinkedIn using Octoparse. 
+```{r}
+library(stringr)
+tidied_Linkedin <- read.csv('https://raw.githubusercontent.com/suswong/DATA-607-Project-3/main/tidied_Linkedin_version4.csv')
+#colnames(tidied_Linkedin)
+```
+
+# Search {.tabset}
+
+## General Skills
+```{r}
+general_skills <- tidied_Linkedin[c('Job_title','Company','Job_location_City','Job_location_State','Seniority_level','Employment_type','Job_function','Industries','Job_description')]
+
+
+general <- c("(?i)Statistical analysis","(?i)data analysis","(?i)Machine Learning","(?i)data visual","(?i)wrangling","(?i)mathematics","(?i)programming","(?i)statistics","(?i)big data","(?i)Artificial intelligence","(?i)Deep learning")
+
+for(i in general){
+  general_skills[i] <- +str_detect(apply(general_skills, 1, paste0, collapse = " ", ignore_case = TRUE), general[which(general == i)])
+}
+
+```
+
+## Techincal Skills
+```{r}
+technical_skills <- tidied_Linkedin[c('Job_title','Company','Job_location_City','Job_location_State','Seniority_level','Employment_type','Job_function','Industries','Job_description')]
+
+technical <- c("(?i)python", "(?i)java", "(?i)javascript", "(?i)sql", "(?i)\\bR\\b", "(?i)spss","(?i)stata", "(?i)sas","(?i)scala","(?i)matlab", "(?i)\\bC\\b","(?i)\\bC++\\b", "(?i)Swift", "(?i)Julia","(?i)Hadoop","(?i)Spark","(?i)Pig","(?i)Tableau","(?i)REDCap", "(?i)Qualtrics", "(?i)Power BI", "(?i)Dedoose", "(?i)Atlas TI", "(?i)NVivo", "(?i)MPlus", "(?i)Mixor", "(?i)dbt", "(?i)BigQuery|big query", "(?i)Superset", "(?i)Baseten", "(?i)Airflow","(?i)ETL/ELT pipelines","(?i)Google Analytics", "(?i)Parse.ly", "(?i)Chartbeat","(?i)Excel", "(?i)Plotly", "(?i)Google Data Studio", "(?i)Looker","(?i)Spotfire","(?i)Smartsheet","(?i)\\bBI\\b","(?i)C#|C#.net","(?i)Statistical analysis","(?i)data analysis","(?i)Machine Learning","(?i)data visual","(?i)wrangling","(?i)mathematics","(?i)programming","(?i)statistics","(?i)big data","(?i)Artificial intelligence","(?i)Deep learning")
+
+for(i in technical){
+   technical_skills[i] <- +str_detect(apply(technical_skills, 1, paste0, collapse = " ", ignore_case = TRUE), technical[which(technical == i)])
+}
+#tidied_Linkedin
+
+
+# technical_skills <- tidied_Linkedin[c('Job_title','Job_description')]
+# technical_skills$Python    <- grepl("Python", technical_skills$Job_description, ignore.case=TRUE)
+# technical_skills$sql    <- grepl("sql", technical_skills$Job_description, ignore.case=TRUE)
+#technical_skills$R    <- grepl("\\bR\\b", technical_skills$Job_description, ignore.case=TRUE)
+#sum(technical_skills$R)
+
+```
+
+## Programming Skills
+```{r}
+programming_skills <- tidied_Linkedin[c('Job_title','Company','Job_location_City','Job_location_State','Seniority_level','Employment_type','Job_function','Industries','Job_description')]
+
+programming <- c("(?i)python", "(?i)java", "(?i)javascript", "(?i)sql", "(?i)\\bR\\b", "(?i)spss","(?i)stata", "(?i)sas","(?i)scala","(?i)matlab", "(?i)\\bC\\b","(?i)\\bC++\\b", "(?i)Swift", "(?i)Julia","(?i)Hadoop","(?i)Spark","(?i)Pig","Go", "(?i)Kotlin","(?i)PHP","(?i)C#|C#.net","(?i)Ruby","(?i)TypeScript","(?i)HTML","(?i)CSS","(?i)NOSQL","(?i)Rust","(?i)Perl")
+
+for(i in programming){
+   programming_skills[i] <- +str_detect(apply(programming_skills, 1, paste0, collapse = " "), programming[which(programming == i)])
+}
+
+# Source: https://www.simplilearn.com/best-programming-languages-start-learning-today-article
+
+```
+
+### Non-Technical Skills
+
+```{r}
+nontechnical_skills <- tidied_Linkedin[c('Job_title','Company','Job_location_City','Job_location_State','Seniority_level','Employment_type','Job_function','Industries','Job_description')]
+
+nontechnical <- c("(?i)communication", "(?i)critical thinking", "(?i)problem solving", "(?i)business acumen", "(?i)storytell", "(?i)adaptability","(?i)team player", "(?i)product understanding","(?i)innovation","(?i)collaboration", "(?i)technical")
+
+for(i in nontechnical){
+   nontechnical_skills[i] <- +str_detect(apply(nontechnical_skills, 1, paste0, collapse = " "), nontechnical[which(nontechnical == i)])
+}
+
+# Source: https://www.simplilearn.com/best-programming-languages-start-learning-today-article
+
+```
+
+# Frequent Skills {.tabset}
+
+## Technical Skills
+```{r}
+library(tidyverse)
+long_table <- technical_skills %>% 
+  pivot_longer(cols = !c('Job_title','Company','Job_location_City','Job_location_State','Seniority_level','Employment_type','Job_function','Industries','Job_description'), names_to = "skill", values_to = "count" )
+
+frequent_skill <- long_table %>% 
+  filter(count == 1)
+frequent_skill <- frequent_skill  %>% 
+  count(skill) %>% 
+  mutate(percentage = (n / nrow(tidied_Linkedin))*100)
+
+library(DT)
+datatable(frequent_skill)
+```
+
+## Programming
+
+Based on 
+```{r}
+programming_long_table <- programming_skills %>% 
+  pivot_longer(cols = !c('Job_title','Company','Job_location_City','Job_location_State','Seniority_level','Employment_type','Job_function','Industries','Job_description'), names_to = "skill", values_to = "count" )
+
+frequent_programming_skill <- programming_long_table %>% 
+  filter(count == 1)
+frequent_programming_skill <- frequent_programming_skill  %>% 
+  count(skill) %>% 
+  mutate(percentage = (n / nrow(tidied_Linkedin))*100)
+
+datatable(frequent_programming_skill)
+```
+## Non-technical 
+```{r}
+nontechnical_long_table <- nontechnical_skills %>% 
+  pivot_longer(cols = !c('Job_title','Company','Job_location_City','Job_location_State','Seniority_level','Employment_type','Job_function','Industries','Job_description'), names_to = "skill", values_to = "count" )
+
+frequent_nontechnical_skill <- nontechnical_long_table %>% 
+  filter(count == 1)
+frequent_nontechnical_skill <- frequent_nontechnical_skill  %>% 
+  count(skill) %>% 
+  mutate(percentage = (n / nrow(tidied_Linkedin))*100)
+
+datatable(frequent_nontechnical_skill)
+```
+
+# Data Visualization {.tabset}
+
+## Technical Skills
+```{r}
+ggplot(frequent_skill , aes(x = reorder(skill, percentage), y = percentage)) + 
+  geom_bar(stat = 'identity', skill= "blue" , fill = 'lightblue') + 
+  coord_flip() + ggtitle("Skills Used Most Often by Percentage") + 
+  ylab("Percentage of skill Used") + 
+  xlab("skill") 
+```
+## Programming 
+```{r}
+```
+Sources
+
+https://stackoverflow.com/questions/73640981/using-grep-on-multiple-columns-to-create-new-variable-in-r
+
+https://stackoverflow.com/questions/44530029/how-to-ignore-case-when-using-str-detect
