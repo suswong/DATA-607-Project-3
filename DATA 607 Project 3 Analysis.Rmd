@@ -40,14 +40,14 @@ https://towardsdatascience.com/top-20-skills-and-keywords-for-data-science-6bc6b
 ```{r}
 general_skills <- tidied_Linkedin[c('Job_title','Company','Job_location_City','Job_location_State','Seniority_level','Employment_type','Job_function','Industries','Job_description')]
 
-general <- c("(?i)Statistical analysis","(?i)data analysis","(?i)Machine Learning","(?i)data visual","(?i)wrangling","(?i)mathematics","(?i)programming","(?i)statistics","(?i)big data","(?i)Artificial intelligence","(?i)Deep learning","(?i)data modeling","(?i)data processing","(?i)data mananagement","(?i)data manipulation","(?i)database","(?i)data architecture","(?i)data mining","(?i)research","(?i)modeling","(?i)analysis")
+general <- c("(?i)Statistical analysis","(?i)Machine Learning","(?i)data visual","(?i)wrangling","(?i)mathematics","(?i)programming|scripting language","(?i)statistics","(?i)big data","(?i)Artificial intelligence|\\bAI\\b","(?i)Deep learning","(?i)data modeling","(?i)data processing","(?i)data mananagement","(?i)data manipulation","(?i)database","(?i)data architecture","(?i)data mining","(?i)research","(?i)modeling","(?i)analysis","(?i)cloud computing")
 
 for(i in general){
   general_skills[i] <- +str_detect(apply(general_skills, 1, paste0, collapse = " ", ignore_case = TRUE), general[which(general == i)])
 }
 
 # colnames(general_skills)
-colnames(general_skills) <- c("Job_title", "Company", "Job_location_City", "Job_location_State","Seniority_level", "Employment_type","Job_function","Industries",                 "Job_description","Statistical analysis","data analysis","Machine Learning","data visual","wrangling","mathematics","programming","statistics","big data","Artificial Intelligence","Deep learning","data modeling","data processing","data mananagement","data manipulation","database","data architecture","data mining","research","modeling","analysis")
+colnames(general_skills) <- c("Job_title", "Company", "Job_location_City", "Job_location_State","Seniority_level", "Employment_type","Job_function","Industries",                 "Job_description","Statistical analysis","Machine Learning","data visual","wrangling","mathematics","programming|scripting language","statistics","big data","Artificial intelligence","Deep learning","data modeling","data processing","data mananagement","data manipulation","database","data architecture","data mining","research","modeling","analysis","cloud computing")
 
 ```
 
@@ -56,13 +56,13 @@ colnames(general_skills) <- c("Job_title", "Company", "Job_location_City", "Job_
 ```{r}
 technical_skills <- tidied_Linkedin[c('Job_title','Company','Job_location_City','Job_location_State','Seniority_level','Employment_type','Job_function','Industries','Job_description')]
 
-technical <- c("(?i)python", "(?i)java", "(?i)javascript", "(?i)sql", "(?i)\\bR\\b", "(?i)spss","(?i)stata", "(?i)sas","(?i)scala","(?i)matlab", "(?i)\\bC\\b","(?i)\\bC++\\b", "(?i)Swift", "(?i)Julia","(?i)Hadoop","(?i)Spark","(?i)Pig","(?i)Tableau","(?i)REDCap", "(?i)Qualtrics", "(?i)Power BI", "(?i)Dedoose", "(?i)Atlas TI", "(?i)NVivo", "(?i)MPlus", "(?i)Mixor", "(?i)dbt", "(?i)BigQuery|big query", "(?i)Superset", "(?i)Baseten", "(?i)Airflow","(?i)ETL/ELT pipelines","(?i)Google Analytics", "(?i)Parse.ly", "(?i)Chartbeat","(?i)Excel", "(?i)Plotly", "(?i)Google Data Studio", "(?i)Looker","(?i)Spotfire","(?i)Smartsheet","(?i)\\bBI\\b|Business Intelligence","(?i)C#|C#.net","(?i)Statistical analysis","(?i)data analysis","(?i)Machine Learning","(?i)data visual","(?i)wrangling","(?i)mathematics","(?i)programming|scripting language","(?i)statistics","(?i)big data","(?i)Artificial intelligence|\\bAI\\b","(?i)Deep learning","(?i)cloud computing","(?i)VBA","(?i)DevOps")
+technical <- c("(?i)spss","(?i)stata", "(?i)sas","(?i)scala","(?i)matlab", "(?i)\\bC\\b","(?i)\\bC++\\b", "(?i)Swift", "(?i)Julia","(?i)Hadoop","(?i)Spark","(?i)Pig","(?i)Tableau","(?i)REDCap", "(?i)Qualtrics", "(?i)Power BI", "(?i)Dedoose", "(?i)Atlas TI", "(?i)NVivo", "(?i)MPlus", "(?i)Mixor", "(?i)dbt", "(?i)BigQuery|big query", "(?i)Superset", "(?i)Baseten", "(?i)Airflow","(?i)ETL/ELT pipelines","(?i)Google Analytics", "(?i)Parse.ly", "(?i)Chartbeat","(?i)Excel", "(?i)Plotly", "(?i)Google Data Studio", "(?i)Looker","(?i)Spotfire","(?i)Smartsheet","(?i)\\bBI\\b|Business Intelligence","(?i)C#|C#.net","(?i)VBA","(?i)DevOps")
 
 for(i in technical){
    technical_skills[i] <- +str_detect(apply(technical_skills, 1, paste0, collapse = " ", ignore_case = TRUE), technical[which(technical == i)])
 }
 
-colnames(technical_skills) <- c("Job_title", "Company", "Job_location_City", "Job_location_State","Seniority_level", "Employment_type","Job_function","Industries",                 "Job_description","Python", "Java", "JavaScript", "SQL", "R", "SPSS","Stata", "SAS","Scala","MATLAB", "C","C++", "Swift", "Julia","Hadoop","Spark","Pig","Tableau","REDCap", "Qualtrics", "Power BI", "Dedoose", "Atlas TI", "NVivo", "MPlus", "Mixor", "dbt", "BigQuery", "Superset", "Baseten", "Airflow","ETL/ELT pipelines","Google Analytics", "Parse.ly", "Chartbeat","Excel", "Plotly", "Google Data Studio", "Looker","Spotfire","Smartsheet","BI","C#|C#.net","statistical analysis","data analysis","Machine Learning","data visual","wrangling","mathematics","programming","statistics","big data","Artificial intelligence","Deep learning","cloud computing","VBA","DevOps")
+colnames(technical_skills) <- c("Job_title", "Company", "Job_location_City", "Job_location_State","Seniority_level", "Employment_type","Job_function","Industries",                 "Job_description", "SPSS","Stata", "SAS","Scala","MATLAB", "C","C++", "Swift", "Julia","Hadoop","Spark","Pig","Tableau","REDCap", "Qualtrics", "Power BI", "Dedoose", "Atlas TI", "NVivo", "MPlus", "Mixor", "dbt", "BigQuery|big query", "Superset", "Baseten", "Airflow","ETL/ELT pipelines","Google Analytics", "Parse.ly", "Chartbeat","Excel", "Plotly", "Google Data Studio", "Looker","Spotfire","Smartsheet","Business Intelligence","C#|C#.net","VBA","DevOps")
 ```
 
 ### Programming Skills
@@ -70,13 +70,13 @@ colnames(technical_skills) <- c("Job_title", "Company", "Job_location_City", "Jo
 ```{r}
 programming_skills <- tidied_Linkedin[c('Job_title','Company','Job_location_City','Job_location_State','Seniority_level','Employment_type','Job_function','Industries','Job_description')]
 
-programming <- c("(?i)python", "(?i)java", "(?i)javascript", "(?i)sql", "(?i)\\bR\\b", "(?i)spss","(?i)stata", "(?i)sas","(?i)scala","(?i)matlab", "(?i)\\bC\\b","(?i)\\bC++\\b", "(?i)Swift", "(?i)Julia","(?i)Hadoop","(?i)Spark","(?i)Pig","\\bGo\\b","(?i)Kotlin","(?i)PHP","(?i)C#|C#.net","(?i)Ruby","(?i)TypeScript","(?i)HTML","(?i)CSS","(?i)NOSQL","(?i)Rust","(?i)Perl","(?i)Alteryx")
+programming <- c("(?i)python", "(?i)java", "(?i)javascript", "(?i)sql", "(?i)\\bR\\b", "(?i)stata","(?i)scala","(?i)matlab", "(?i)\\bC\\b","(?i)\\bC++\\b", "(?i)Swift", "(?i)Julia","(?i)Hadoop","(?i)Spark","(?i)Pig","\\bGo\\b","(?i)Kotlin","(?i)PHP","(?i)C#|C#.net","(?i)Ruby","(?i)TypeScript","(?i)HTML","(?i)CSS","(?i)NOSQL","(?i)Rust","(?i)Perl","(?i)Alteryx")
 
 for(i in programming){
    programming_skills[i] <- +str_detect(apply(programming_skills, 1, paste0, collapse = " "), programming[which(programming == i)])
 }
 
-colnames(programming_skills) <- c("Job_title", "Company", "Job_location_City", "Job_location_State","Seniority_level", "Employment_type","Job_function","Industries",                 "Job_description","Python", "Java", "JavaScript", "SQL", "R", "SPSS","Stata", "SAS","Scala","MATLAB", "C","C++", "Swift", "Julia","Hadoop","Spark","Pig","Go","Kotlin","PHP","C#|C#.net","Ruby","TypeScript","HTML","CSS","NOSQL","Rust","Perl","Alteryx")
+colnames(programming_skills) <- c("Job_title", "Company", "Job_location_City", "Job_location_State","Seniority_level", "Employment_type","Job_function","Industries",                 "Job_description","Python", "Java", "JavaScript", "SQL", "R", "Stata", "Scala","MATLAB", "C","C++", "Swift", "Julia","Hadoop","Spark","Pig","Go","Kotlin","PHP","C#|C#.net","Ruby","TypeScript","HTML","CSS","NOSQL","Rust","Perl","Alteryx")
 
 # Source: https://www.simplilearn.com/best-programming-languages-start-learning-today-article
 
@@ -101,7 +101,7 @@ colnames(nontechnical_skills) <- c("Job_title", "Company", "Job_location_City", 
 ## Frequent Skills {.tabset}
 
 ### General Skills 
-```{r}
+```{r, message=FALSE}
 library(tidyverse)
 general_long_table <- general_skills %>% 
   pivot_longer(cols = !c('Job_title','Company','Job_location_City','Job_location_State','Seniority_level','Employment_type','Job_function','Industries','Job_description'), names_to = "skill", values_to = "count" )
@@ -133,7 +133,7 @@ library(DT)
 datatable(frequent_technical_skill)
 ```
 
-### Programming
+### Programming Languages
 
 Based on 
 ```{r}
@@ -165,7 +165,7 @@ datatable(frequent_nontechnical_skill)
 # Data Visualization {.tabset}
 
 ## General Skills
-```{r}
+```{r, warning=FALSE}
 frequent_general_skill %>% 
     arrange(desc(percentage)) %>%
     slice(1:10) %>%
@@ -175,8 +175,10 @@ frequent_general_skill %>%
   ylab("Percentage of Skill in Job Posting") +
   xlab("Skill")
 ```
+
 ## Technical Skills
-```{r}
+
+```{r, warning=FALSE}
 frequent_technical_skill %>% 
     arrange(desc(percentage)) %>%
     slice(1:10) %>%
@@ -186,19 +188,21 @@ frequent_technical_skill %>%
   ylab("Percentage of Skill in Job Posting") +
   xlab("Skill")
 ```
-## Programming 
-```{r}
+
+## Programming Languages
+
+```{r, warning=FALSE}
 frequent_programming_skill %>% 
     arrange(desc(percentage)) %>%
     slice(1:10) %>%
     ggplot(., aes(x = reorder(skill, percentage), y = percentage)) +
   geom_bar(stat = 'identity', skill= "blue" , fill = 'lightblue') +
-  coord_flip() + ggtitle("Top 10 Programming Skills") +
+  coord_flip() + ggtitle("Top 10 Programming Languages") +
   ylab("Percentage of Skill in Job Posting") +
   xlab("Skill")
 ```
 ## Non-Technical Skills
-```{r}
+```{r, warning=FALSE}
 frequent_nontechnical_skill %>% 
     arrange(desc(percentage)) %>%
     slice(1:10) %>%
