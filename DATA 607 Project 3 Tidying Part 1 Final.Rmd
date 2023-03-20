@@ -1,0 +1,232 @@
+---
+title: "DATA 607 Project 3 Tidying Part 1"
+author: "Susanna Wong"
+date: "2023-03-14"
+output:
+  html_document:
+    theme: cerulean
+    code_folding: hide
+    toc: true
+    toc_float: true
+editor_options: 
+  markdown: 
+    wrap: sentence
+---
+
+# Introduction 
+The goal of the project is to use data to answer the question, "Which are the most valued data science skills?".
+
+The most valued data science skills are the skills that appear most often on job postings. Using Octoparse and Parsehub, we acquired job postings from LinkedIn.
+
+<a href="https://rpubs.com/sussing/1017226"> Project 3 Acquiring the data  </a>
+
+The tidying part of our project 3 was split into two parts.
+In Tidying Part 1, we will do the following:
+
+-   Remove leading and trailing white spaces for multiple columns
+
+-   Split the Job location column into two columns: city and state
+
+-   Fill in the missing values in the state column.
+
+-   Remove duplicated job posting. This part was particularly tricky because multiple columns contained duplicates.
+
+
+# Linkedin Dataframe
+
+The LinkedIn dataframe contains 2313 job postings and 14 columns.
+The columns include "Keyword", "Location", "Job title", "Job link", "Company", "Company link", "Job location", "Post time", "Applicants count", "Job description", "Seniority level", "Employment type", "Job function", and "Industries".
+
+```{r}
+Linkedin <- read.csv('https://raw.githubusercontent.com/suswong/DATA-607-Project-3/main/distinct_total_Linkedin.csv')
+
+library(DT)
+datatable(head(Linkedin, 50),
+  plugins = "ellipsis",
+  options = list(scrollX = TRUE,
+    columnDefs = list(list(
+      targets = "_all",
+      render = JS("$.fn.dataTable.render.ellipsis(30, false )")
+    ))
+  )
+)
+```
+
+
+# Tidy up Linkedin Data {.tabset}
+
+Below are some things we need to tidy:
+
+-   Remove leading and trailing white spaces
+
+-   Split the 'Job_location' column into two columns: city and state
+
+-   Missing values in the state column
+
+## Remove leading and trailing white spaces {.tabset}
+
+We need to remove the leading and trailing white spaces in the following columns:
+
+-   Company
+
+-   Job_location
+
+-   Applicants_count
+
+-   Seniority_level
+
+-   Employment_type
+
+-   Job_function
+
+-   Industries
+
+
+### Matrix (Before)
+There leading and trailing white spaces in several columns.
+They are indicated by '\n'.
+```{r}
+head(Linkedin,1)
+```
+
+### Matrix
+
+The leading and trailing white spaces are removed.
+"\n" are removed by using 'trims'.
+
+```{r}
+rem_WS_Linkedin <- Linkedin
+rem_WS_Linkedin <- data.frame(lapply(rem_WS_Linkedin, trimws), stringsAsFactors = FALSE)
+# At first, I removed the white spaces manually (see below). However, the link below shows how to remove leading and trailing white spaces for the entire dataframe. https://stackoverflow.com/questions/20760547/removing-whitespace-from-a-whole-data-frame-in-r
+
+# tidied_Linkedin <- Linkedin
+# tidied_Linkedin$Company <- str_trim(tidied_Linkedin$Company)
+# tidied_Linkedin$Job_location <- str_trim(tidied_Linkedin$Job_location)
+# tidied_Linkedin$Post_time <- str_trim(tidied_Linkedin$Post_time)
+# tidied_Linkedin$Applicants_count <- str_trim(tidied_Linkedin$Applicants_count)
+# tidied_Linkedin$Seniority_level <- str_trim(tidied_Linkedin$Seniority_level)
+# tidied_Linkedin$Employment_type <- str_trim(tidied_Linkedin$Employment_type)
+# tidied_Linkedin$Job_function <- str_trim(tidied_Linkedin$Job_function)
+# tidied_Linkedin$Industries <- str_trim(tidied_Linkedin$Industries)
+
+head(rem_WS_Linkedin,1)
+```
+
+### Datatable
+
+```{r}
+datatable(head(rem_WS_Linkedin),  plugins = "ellipsis",
+  options = list(
+    scrollX = TRUE,
+    columnDefs = list(list(
+      targets = "_all",
+      render = JS("$.fn.dataTable.render.ellipsis(30, false )")
+    ))
+  )
+)
+```
+
+## Tidy 'Job_location' column {.tabset}
+
+### Split the 'Job_location' column into city and state
+
+The majority of the values in the 'Job_location' column contains both city and state.
+They are separated by commas. We need to split the 'Job_location' column by its comma.
+
+Then, we need to reorder the columns so that the columns with location are not last in the dataframe. I also dropped the 'Location' and 'Job_location' columns.
+
+All of the values in the 'Location' column contains "United States". We do not need this column in our analysis as all job postings in this dataframe are from United States.
+
+```{r, warning=FALSE, message=FALSE}
+library(shiny)
+library(dplyr)
+library(tidyr)
+library(stringr)
+split_location_Linkedin <- rem_WS_Linkedin # Create a new dataframe to make new edits
+# tidied_Linkedin %>% 
+#    separate(Job_location,c("City","State"),sep=",")  #I end up not using this code because it did not change it permanently. 
+
+split_location_Linkedin[c('Job_location_City', 'Job_location_State')] <- str_split_fixed(split_location_Linkedin$Job_location, ',', 2) # 2 new columns are created. They are the last two columns. 
+
+#colnames(split_location_Linkedin)
+
+# Drop the 'Location' and 'Job_location' columns 
+tidied_Linkedin <- split_location_Linkedin[c('Keyword', 'Job_title', 'Job_link', 'Company','Company_link','Job_location_City','Job_location_State','Post_time','Applicants_count','Seniority_level','Employment_type','Job_function','Industries','Job_description')]
+
+datatable(head(tidied_Linkedin, 50),        
+  plugins = "ellipsis",
+  options = list(
+    scrollX = TRUE,
+    columnDefs = list(list(
+      targets = "_all",
+      render = JS("$.fn.dataTable.render.ellipsis(30, false)")
+    ))
+  )
+)
+
+```
+
+### Missing Values in 'Job_location_State'
+
+Some values in the raw file only contain the state but no city. When I split the 'location' column by comma, those state values was set in the city column. Thus, some values are missing in 'Job_location_State'. I manually input the missing state abbreviation based on the provided location. 
+
+```{r}
+#unique(tidied_Linkedin$Job_location_State)
+tidied_Linkedin$Job_location_State[tidied_Linkedin$Job_location_City == "New York"] <- "NY"
+tidied_Linkedin$Job_location_State[tidied_Linkedin$Job_location_City == "New York City Metropolitan Area"] <- "NY"
+tidied_Linkedin$Job_location_State[tidied_Linkedin$Job_location_City == "Utica-Rome Area"] <- "NY"
+tidied_Linkedin$Job_location_State[tidied_Linkedin$Job_location_City == "Denver Metropolitan Area"] <- "CO"
+tidied_Linkedin$Job_location_State[tidied_Linkedin$Job_location_City == "California"] <- "CA"
+tidied_Linkedin$Job_location_State[tidied_Linkedin$Job_location_City == "San Francisco Bay Area"] <- "CA"
+tidied_Linkedin$Job_location_State[tidied_Linkedin$Job_location_City == "Los Angeles Metropolitan Area"] <- "CA"
+tidied_Linkedin$Job_location_State[tidied_Linkedin$Job_location_City == "North Carolina"] <- "NC"
+tidied_Linkedin$Job_location_State[tidied_Linkedin$Job_location_City == "Florida"] <- "FL"
+tidied_Linkedin$Job_location_State[tidied_Linkedin$Job_location_City == "Texas"] <- "TX"
+tidied_Linkedin$Job_location_State[tidied_Linkedin$Job_location_City == "Dallas-Fort Worth Metroplex"] <- "TX"
+tidied_Linkedin$Job_location_State[tidied_Linkedin$Job_location_City == "Minnesota"] <- "MN"
+tidied_Linkedin$Job_location_State[tidied_Linkedin$Job_location_City == "Ohio"] <- "OH"
+tidied_Linkedin$Job_location_State[tidied_Linkedin$Job_location_City == "Salt Lake City Metropolitan Area"] <- "UT"
+tidied_Linkedin$Job_location_State[tidied_Linkedin$Job_location_City == "Greater Chicago Area"] <- "IA"
+tidied_Linkedin$Job_location_State[tidied_Linkedin$Job_location_City == "Greater Seattle Area"] <- "WA"
+tidied_Linkedin$Job_location_State[tidied_Linkedin$Job_location_City == "Des Moines Metropolitan Area"] <- "IA"
+tidied_Linkedin$Job_location_State[tidied_Linkedin$Job_location_City == "Detroit Metropolitan Area"] <- "MI"
+tidied_Linkedin$Job_location_State[tidied_Linkedin$Job_location_City == "Greater Rockford Area"] <- "IL"
+tidied_Linkedin$Job_location_State[tidied_Linkedin$Job_location_City == "Charlotte Metro"] <- "NC"
+tidied_Linkedin$Job_location_State[tidied_Linkedin$Job_location_City == "Greater Houston"] <- "TX"
+tidied_Linkedin$Job_location_State[tidied_Linkedin$Job_location_City == "Greater St. Louis"] <- "MO"
+tidied_Linkedin$Job_location_State[tidied_Linkedin$Job_location_City == "Greater Boston"] <- "MA"
+tidied_Linkedin$Job_location_State[tidied_Linkedin$Job_location_City == "San Diego Metropolitan Area"] <- "CA"
+tidied_Linkedin$Job_location_State[tidied_Linkedin$Job_location_City == "Atlanta Metropolitan Area"] <- "GA"
+tidied_Linkedin$Job_location_State[tidied_Linkedin$Job_location_City == "Greater Orlando"] <- "FL"
+tidied_Linkedin$Job_location_State[tidied_Linkedin$Job_location_City == "Greater Milwaukee"] <- "WI"
+tidied_Linkedin$Job_location_State[tidied_Linkedin$Job_location_City == "Washington DC-Baltimore Area"] <- "VA"
+tidied_Linkedin$Job_location_State[tidied_Linkedin$Job_location_City == "Kansas City Metropolitan Area"] <- "MO"
+tidied_Linkedin$Job_location_State[tidied_Linkedin$Job_location_City == "Nashville Metropolitan Area"] <- "TN"
+
+tidied_Linkedin$Job_location_State[tidied_Linkedin$Job_location_City == "Greater Philadelphia"] <- "PA"
+tidied_Linkedin$Job_location_State[tidied_Linkedin$Job_location_City == "Greater Phoenix Area"] <- "AZ"
+tidied_Linkedin$Job_location_State[tidied_Linkedin$Job_location_City == "Cincinnati Metropolitan Area"] <- "OH"
+
+datatable(head(tidied_Linkedin),  plugins = "ellipsis",
+  options = list(
+    scrollX = TRUE,
+    columnDefs = list(list(
+      targets = "_all",
+      render = JS("$.fn.dataTable.render.ellipsis(30, false )")
+    ))
+  )
+)
+```
+
+# Create a csv file
+
+Create a csv for analysis.
+
+```{r}
+write.csv(tidied_Linkedin, "C:\\Desktop\\DATA 607\\tidied_Linkedin_version4.csv", row.names=FALSE)
+```
+
+# Sources
+
+The Job_description columns contain long strings. Thus, it was difficult to see the rendered datatable. I used partial of the code from the following website to help me display a more viewable table.
+<https://stackoverflow.com/questions/71713905/r-shiny-datatableoutput-prevent-column-from-showing-full-text-column>
