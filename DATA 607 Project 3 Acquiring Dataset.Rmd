@@ -1,0 +1,162 @@
+---
+title: "DATA 607 Project 3 Acquiring Dataset"
+author: "Susanna Wong"
+date: "2023-03-17"
+output:
+  html_document:
+    theme: cerulean
+    code_folding: hide
+    toc: true
+    toc_float: true
+editor_options: 
+  markdown: 
+    wrap: sentence
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Introduction
+
+There was a concerning amount of duplicates in our initial dataset ('Raw_Data_Linkedin1'). Throughout the week, I used Octoparse to web scrap job postings in the United States, using different keywords: "data", "data analyst", "data scientist", and "data engineering". Then, I combined all the files together, and removed the duplicates, using 'distinct()' from 'dplyr' package. 
+
+# LinkedIn CSV Files {.tabset}
+
+All of the files contain the same attributes: "Keyword", "Location", "Job_title", "Job_link", "Company", "Company_link", "Job_location", "Post_time", "Applicants_count", "Job_description", "Seniority_level", "Employment_type", "Job_function", and"Industries".
+
+```{r, message=FALSE}
+library(dplyr)
+Raw_Data_Linkedin1 <- read.csv('https://raw.githubusercontent.com/suswong/Project-3-raw-dataset/main/Job%20details%20by%20search_LinkedIn%20version%202(1).csv')
+Raw_Data_Linkedin2 <- read.csv('https://raw.githubusercontent.com/suswong/data-sets/main/LinkedIn%20Version%203.csv')
+Raw_Data_Linkedin3 <- read.csv('https://raw.githubusercontent.com/suswong/Project-3-raw-dataset/main/LinkedIn_data_scientist.csv')
+Raw_Data_Linkedin4 <- read.csv('https://raw.githubusercontent.com/suswong/Project-3-raw-dataset/main/LinkedIn_data%20engineer.csv')
+```
+
+## Linkedin Dataset 1
+
+Raw_Data_Linkedin1 has 5059 job postings. We web scrapped these job posting using the keyword "data". 
+```{r}
+library(DT)
+datatable(head(Raw_Data_Linkedin1, 50),
+  plugins = "ellipsis",
+  options = list(scrollX = TRUE,
+    columnDefs = list(list(
+      targets = "_all",
+      render = JS("$.fn.dataTable.render.ellipsis(30, false )")
+    ))
+  )
+)
+```
+
+## Linkedin Dataset 2
+
+Raw_Data_Linkedin2 has 522 job postings. We web scrapped these job posting using the keyword "data". 
+```{r}
+library(DT)
+datatable(head(Raw_Data_Linkedin2, 50),
+  plugins = "ellipsis",
+  options = list(scrollX = TRUE,
+    columnDefs = list(list(
+      targets = "_all",
+      render = JS("$.fn.dataTable.render.ellipsis(30, false )")
+    ))
+  )
+)
+```
+
+## Linkedin Dataset 3
+
+Raw_Data_Linkedin3 has 457 job postings. We web scrapped these job posting using the keyword "data scientist". 
+
+```{r}
+library(DT)
+datatable(head(Raw_Data_Linkedin3, 50),
+  plugins = "ellipsis",
+  options = list(scrollX = TRUE,
+    columnDefs = list(list(
+      targets = "_all",
+      render = JS("$.fn.dataTable.render.ellipsis(30, false )")
+    ))
+  )
+)
+```
+
+## Linkedin Dataset 4
+
+Raw_Data_Linkedin4 has 741 job postings. We web scrapped these job posting using the keyword "data engineer". 
+
+```{r}
+library(DT)
+datatable(head(Raw_Data_Linkedin4, 50),
+  plugins = "ellipsis",
+  options = list(scrollX = TRUE,
+    columnDefs = list(list(
+      targets = "_all",
+      render = JS("$.fn.dataTable.render.ellipsis(30, false )")
+    ))
+  )
+)
+```
+# Combine the Dataframe
+
+I used 'rbind()' from the 'plyr' package to join our dataframes together, which resulted 7236 job postings. Then, I removed the duplicates, using 'distinct()' from 'dplyr' package. As a result, there are 2313 job postings from Linkedin. I created a csv file for the dataset to be tidied.
+
+```{r}
+total <- rbind(Raw_Data_Linkedin1, Raw_Data_Linkedin2, Raw_Data_Linkedin3, Raw_Data_Linkedin4)
+
+distinct_total <- distinct(total)
+
+write.csv(distinct_total, "C:\\Desktop\\DATA 607\\distinct_total_Linkedin.csv", row.names=FALSE)
+```
+
+# Glassdoor CSV Files
+
+All of the files contain the same attributes: "Keyword", "Location", "Page", "company", "rating", "Job_title", "Place", "salary", "post_date", and "Job_description".
+
+```{r}
+Raw_Data_Glassdoor1 <- read.csv('https://raw.githubusercontent.com/suswong/Project-3-raw-dataset/main/Glassdoor%20version%203.csv')
+Raw_Data_Glassdoor2 <- read.csv('https://raw.githubusercontent.com/suswong/Project-3-raw-dataset/main/Job%20listing_Glassdoor%20version%202.csv')
+```
+
+## Glassdoor Dataset 1
+
+Raw_Data_Glassdoor1 has 510 job postings.
+```{r}
+library(DT)
+datatable(head(Raw_Data_Glassdoor1, 50),
+  plugins = "ellipsis",
+  options = list(scrollX = TRUE,
+    columnDefs = list(list(
+      targets = "_all",
+      render = JS("$.fn.dataTable.render.ellipsis(30, false )")
+    ))
+  )
+)
+```
+
+## Glassdoor Dataset 2
+
+Raw_Data_Glassdoor2 has 810 job postings.
+```{r}
+library(DT)
+datatable(head(Raw_Data_Glassdoor2, 50),
+  plugins = "ellipsis",
+  options = list(scrollX = TRUE,
+    columnDefs = list(list(
+      targets = "_all",
+      render = JS("$.fn.dataTable.render.ellipsis(30, false )")
+    ))
+  )
+)
+```
+
+# Combine the Dataframe
+
+I used 'rbind()' from the 'plyr' package to join our dataframes together. Then, I removed the duplicates, using 'distinct()' from 'dplyr' package. As a result, there are 1320 job postings from Glassdoor. I created a csv file for the dataset to be tidied.
+```{r}
+total_glassdoor <- rbind(Raw_Data_Glassdoor1, Raw_Data_Glassdoor2)
+distinct_total_glassdoor <- distinct(total_glassdoor)
+
+write.csv(distinct_total_glassdoor, "C:\\Desktop\\DATA 607\\distinct_total_glassdoor.csv", row.names=FALSE)
+```
