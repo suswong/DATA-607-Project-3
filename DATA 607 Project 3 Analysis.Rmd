@@ -1,0 +1,398 @@
+---
+title: "DATA 607 Project 3 Analysis"
+author: "Susanna Wong"
+date: "2023-03-15"
+output:
+  html_document:
+    theme: cerulean
+    code_folding: hide
+    toc: true
+    toc_float: true
+editor_options: 
+  markdown: 
+    wrap: sentence
+---
+
+# Introduction
+
+The goal of the project is to use data to answer the question, "Which are the most valued data science skills?".
+We web scraped a major job search engine (ex: Indeed, Linkedin, Glassdoor, etc) for job postings.
+Our raw csv contained attributes including: job title, job URL, company name, job level (senior, junior, associate), location, appointment type, job industry, job function, and job description.
+Then, we created essentially 2 lists: technical skills and soft skills/non-technical skills.
+Our analysis was aimed at identifying the top 5 most frequent technical skills and soft skills on the job postings.
+The most valued data science skills are the skills that appear most often on job postings.
+While analysis was mostly aimed at analyzing said skills, tidying also included creating additional columns for job salary, job city/state, which jobs were remote, and, education requirements for each role.
+
+# Team Collaboration
+
+1.  Susanna Wong: Web scapping, Tidying, Analysis, Write Up
+2.  Gabriel Castellanos: ER Diagram, Database, Tidying, Write Up
+3.  Beshkia Kvarnstrom: Web scapping, Analysis
+4.  Laura Puebla Aguila: Write Up
+
+# Acquiring the data
+
+In the beginning, we used the package 'rvest' on R to web scrape Indeed for job postings.
+However, we ran into a 403 error.
+There is an API restriction.
+So, we used Parsehub and Octoparse to scrap job postings from LinkedIn using the keywords: 'data', 'data analyst', 'data scientist', and 'data engineer'.
+
+From Octoparse, we were able to obtain 7236 job postings from LinkedIn and over 1000 job postings from Indeed.
+However, due to incomplete data set in Glassdoor, we decided to use Linkedin dataset.
+After removing duplicate files, we end up with 1342 job postings from Linkedin.
+
+<a href="https://rpubs.com/sussing/1017226"> Project 3 Acquiring the data </a>
+
+```{r}
+library(stringr)
+tidied_Linkedin <- read.csv('https://raw.githubusercontent.com/suswong/DATA-607-Project-3/main/final%20tidied%20Linkedin.csv')
+```
+
+# Tidying the Dataframe
+
+Below are some of things we did to tidy our dataframe:
+
+-   Remove leading and trailing white spaces
+
+-   Split the Job location column into two columns: city and state
+
+-   Fill in the missing values in the state column
+
+-   Remove duplicate job posting
+
+-   Create a column for job type (remote, hybrid, ...), salary, and degree qualification (Bachelors, ... )
+
+<a href="https://rpubs.com/sussing/1017562"> Project 3 Tidying Part 1 </a>
+
+<a href="https://rpubs.com/sussing/1017547"> Project 3 Tidying Part 2 </a>
+
+# Database Plan {.tabset}
+
+The database model is similar to the ER diagram shown: we have one master table containing all the job postings that we scrapped.
+This master table contains attributes common to any job posting: Job Title, Job ID Number (PK), Job Level (internship, contract, senior, etc..), Associated Industry, Salary, Appointment Type (Remote, Hybrid, On-site), Education Level, And associated skills.
+Stemming from the master table we have a salary table with an FK for the JOB ID associated with each job.
+We have another table describing each employer with their own respective ID.
+From this employer, table stems an employer location table with a city and state for each employer.
+Other branches from the master table include a skills table with a unique id for each skill in our dataset.
+Stemming from the skills table lies a Skill_Group referencing which skill group each special skill falls under.
+Other branches from the master table include a table normalized for education_levels; a normalized table for Associated Industries; a separate table for Job Levels; a table for Appointment Types; and a normalized table for unique Job titles (Data Scientist, Data Engineer, Data Analyst, etc....).
+While our final dataset didn't necessarily conform to this proposed model to lack of time and tidying challenges, this proposed is where we hoped to bring our dataset if we had more time.
+
+## ER Diagram
+
+```{r out.width="50%"}
+url <- "https://raw.githubusercontent.com/suswong/DATA-607-Project-3/main/Data%20607%20ER%20Diagram.png"
+knitr::include_graphics(url)
+```
+
+## Source Code
+
+The source code is in this <a href="https://github.com/gc521/DATA-607-Project-3/blob/main/database.source.code.Data607.Project3.txt"> Github link </a>
+
+# Analysis
+
+## Frequent Skills {.tabset}
+
+We used a loop that creates a new column for each skill and return a "1" or "0" for each row (job posting).
+It returns a "1" if the skill is present in the "Job_description" column, and "0" if the skill is not in the column.
+
+### General Skills
+
+We <a href="https://towardsdatascience.com/top-20-skills-and-keywords-for-data-science-6bc6bfc8c28a"> researched </a> top skills and keyword for data science.
+
+The top 10 most frequent skills found in the job postings are analysis, technical, database, research, programming, machine learning, modeling, statistics, mathematics, and data visual.
+
+```{r}
+general_skills <- tidied_Linkedin[c("Titile", "Company","City","State","Seniority_level","Employment_type","Industry","Function", "Education","Remote", "Salary","Description")]
+
+general <- c("(?i)Statistical analysis","(?i)Machine Learning","(?i)data visual","(?i)wrangling","(?i)mathematics","(?i)programming|scripting language","(?i)statistics","(?i)big data","(?i)Artificial intelligence|\\bAI\\b","(?i)Deep learning","(?i)data modeling","(?i)data processing","(?i)data mananagement","(?i)data manipulation","(?i)database","(?i)data architecture","(?i)data mining","(?i)research","(?i)modeling","(?i)analysis","(?i)cloud computing","(?i)technical")
+
+for(i in general){
+  general_skills[i] <- +str_detect(apply(general_skills, 1, paste0, collapse = " ", ignore_case = TRUE), general[which(general == i)])
+}
+
+# colnames(general_skills)
+colnames(general_skills) <- c("Job_Title", "Company","City","State","Seniority_level","Employment_type","Industry","Job_Function", "Education","Remote", "Salary","Job_Description","Statistical analysis","Machine Learning","data visual","wrangling","mathematics","programming","statistics","big data","Artificial intelligence","Deep learning","data modeling","data processing","data mananagement","data manipulation","database","data architecture","data mining","research","modeling","analysis","cloud computing","technical")
+
+```
+
+```{r, message=FALSE}
+library(tidyverse)
+general_long_table <- general_skills %>% 
+  pivot_longer(cols = !c("Job_Title", "Company","City","State","Seniority_level","Employment_type","Industry","Job_Function", "Education","Remote", "Salary","Job_Description"), names_to = "skill", values_to = "count" )
+
+frequent_general_skill <- general_long_table %>% 
+  filter(count == 1)
+frequent_general_skill <- frequent_general_skill  %>% 
+  count(skill) %>% 
+  mutate(percentage = (n / nrow(tidied_Linkedin))*100)
+
+frequent_general_skill$percentage <- as.numeric(format(round(frequent_general_skill$percentage,2),nsmall =2))
+
+library(DT)
+datatable(frequent_general_skill, colnames = c('Skill', 'Count', 'Percentage'))
+```
+
+### Techincal Skills
+
+The top 10 most frequent technical skills found in the job postings are Excel, BI, Scala, Spark, Tableau, SAS, AirFlow, DevOps, and Hadoop.
+
+```{r}
+technical_skills <- tidied_Linkedin[c("Titile", "Company","City","State","Seniority_level","Employment_type","Industry","Function", "Education","Remote", "Salary","Description")]
+
+technical <- c("(?i)spss","(?i)stata", "(?i)sas","(?i)scala","(?i)matlab", "(?i)Swift", "(?i)Julia","(?i)Hadoop","(?i)Spark","(?i)Pig","(?i)Tableau","(?i)REDCap", "(?i)Qualtrics", "(?i)Power BI", "(?i)Dedoose", "(?i)Atlas TI", "(?i)NVivo", "(?i)MPlus", "(?i)Mixor", "(?i)dbt", "(?i)BigQuery|big query", "(?i)Superset", "(?i)Baseten", "(?i)Airflow","(?i)ETL/ELT pipelines","(?i)Google Analytics", "(?i)Parse.ly", "(?i)Chartbeat","(?i)Excel", "(?i)Plotly", "(?i)Google Data Studio", "(?i)Looker","(?i)Spotfire","(?i)Smartsheet","(?i)\\bBI\\b|Business Intelligence","(?i)C#|C#.net","(?i)VBA","(?i)DevOps")
+
+for(i in technical){
+   technical_skills[i] <- +str_detect(apply(technical_skills, 1, paste0, collapse = " ", ignore_case = TRUE), technical[which(technical == i)])
+}
+
+colnames(technical_skills) <- c("Job_Title", "Company","City","State","Seniority_level","Employment_type","Industry","Job_Function", "Education","Remote", "Salary","Job_Description", "SPSS","Stata", "SAS","Scala","MATLAB", "Swift", "Julia","Hadoop","Spark","Pig","Tableau","REDCap", "Qualtrics", "Power BI", "Dedoose", "Atlas TI", "NVivo", "MPlus", "Mixor", "dbt", "BigQuery|big query", "Superset", "Baseten", "Airflow","ETL/ELT pipelines","Google Analytics", "Parse.ly", "Chartbeat","Excel", "Plotly", "Google Data Studio", "Looker","Spotfire","Smartsheet","Business Intelligence","C#|C#.net","VBA","DevOps")
+```
+
+```{r}
+#library(tidyverse)
+technical_long_table <- technical_skills %>% 
+  pivot_longer(cols = !c("Job_Title", "Company","City","State","Seniority_level","Employment_type","Industry","Job_Function", "Education","Remote", "Salary","Job_Description"), names_to = "skill", values_to = "count" )
+
+frequent_technical_skill <- technical_long_table %>% 
+  filter(count == 1)
+frequent_technical_skill <- frequent_technical_skill  %>% 
+  count(skill) %>% 
+  mutate(percentage = (n / nrow(tidied_Linkedin))*100)
+
+frequent_technical_skill$percentage <- as.numeric(format(round(frequent_technical_skill$percentage,2),nsmall =2))
+
+library(DT)
+datatable(frequent_technical_skill, colnames = c('Skill', 'Count', 'Percentage'))
+```
+
+### Programming Language
+
+We <a href="https://www.simplilearn.com/best-programming-languages-start-learning-today-article"> researched </a> top 20 popular programming language.
+
+The top 10 most frequent programming skills found in the job postings are SQL, python, Scala, R, Spark, Java, Rust, C, C++, and NOSQL.
+
+```{r}
+programming_skills <- tidied_Linkedin[c("Titile", "Company","City","State","Seniority_level","Employment_type","Industry","Function", "Education","Remote", "Salary","Description")]
+
+programming <- c("(?i)python", "(?i)java", "(?i)javascript", "(?i)sql", "(?i)\\bR\\b", "(?i)stata","(?i)scala","(?i)matlab", "(?i)\\bC\\b","(?i)\\bC++\\b", "(?i)Swift", "(?i)Julia","(?i)Hadoop","(?i)Spark","(?i)Pig","\\bGo\\b","(?i)Kotlin","(?i)PHP","(?i)C#|C#.net","(?i)Ruby","(?i)TypeScript","(?i)HTML","(?i)CSS","(?i)NOSQL","(?i)Rust","(?i)Perl","(?i)Alteryx")
+
+for(i in programming){
+   programming_skills[i] <- +str_detect(apply(programming_skills, 1, paste0, collapse = " "), programming[which(programming == i)])
+}
+
+colnames(programming_skills) <- c("Job_Title", "Company","City","State","Seniority_level","Employment_type","Industry","Job_Function", "Education","Remote", "Salary","Job_Description","Python", "Java", "JavaScript", "SQL", "R", "Stata", "Scala","MATLAB", "C","C++", "Swift", "Julia","Hadoop","Spark","Pig","Go","Kotlin","PHP","C#|C#.net","Ruby","TypeScript","HTML","CSS","NOSQL","Rust","Perl","Alteryx")
+
+
+```
+
+```{r}
+programming_long_table <- programming_skills %>% 
+  pivot_longer(cols = !c("Job_Title", "Company","City","State","Seniority_level","Employment_type","Industry","Job_Function", "Education","Remote", "Salary","Job_Description"), names_to = "skill", values_to = "count" )
+
+frequent_programming_skill <- programming_long_table %>% 
+  filter(count == 1)
+frequent_programming_skill <- frequent_programming_skill  %>% 
+  count(skill) %>% 
+  mutate(percentage = (n / nrow(tidied_Linkedin))*100)
+
+frequent_programming_skill$percentage <- as.numeric(format(round(frequent_programming_skill$percentage,2),nsmall =2))
+
+datatable(frequent_programming_skill, colnames = c('Skill', 'Count', 'Percentage'))
+```
+
+### Non-Technical Skills
+
+The top 10 most frequent non-technical skills found in the job postings are communication, organization, detail, visusalization, problem-solving, attention, accuracy, presentation, collaboration, innovation.
+
+```{r}
+nontechnical_skills <- tidied_Linkedin[c("Titile", "Company","City","State","Seniority_level","Employment_type","Industry","Function", "Education","Remote", "Salary","Description")]
+
+nontechnical <- c("(?i)communicate|communication", "(?i)critical thinking|critical-thinking", "(?i)problem solving|problem-solving", "(?i)business acumen", "(?i)storytell|data narrative", "(?i)adaptability","(?i)team player|team spirit", "(?i)product understanding","(?i)innovation","(?i)collaboration","(?i)visualization","(?i)attention","(?i)interpersonal","(?i)detail","(?i)presentation","(?i)multitask","(?i)decision making|decision-making","(?i)accuracy", "(?i)organization|organized","(?i)time management")
+
+for(i in nontechnical){
+   nontechnical_skills[i] <- +str_detect(apply(nontechnical_skills, 1, paste0, collapse = " "), nontechnical[which(nontechnical == i)])
+}
+
+colnames(nontechnical_skills) <- c("Job_Title", "Company","City","State","Seniority_level","Employment_type","Industry","Job_Function", "Education","Remote", "Salary","Job_Description","communication", "critical thinking", "problem-solving", "business acumen", "data narrative", "adaptability","team player", "product understanding","innovation","collaboration","visualization","attention","interpersonal","detail","presentation","multitask","decision-making","accuracy", "organization","time management")
+# Source: https://www.simplilearn.com/best-programming-languages-start-learning-today-article
+
+```
+
+```{r}
+nontechnical_long_table <- nontechnical_skills %>% 
+  pivot_longer(cols = !c("Job_Title", "Company","City","State","Seniority_level","Employment_type","Industry","Job_Function", "Education","Remote", "Salary","Job_Description"), names_to = "skill", values_to = "count" )
+
+frequent_nontechnical_skill <- nontechnical_long_table %>% 
+  filter(count == 1)
+frequent_nontechnical_skill <- frequent_nontechnical_skill  %>% 
+  count(skill) %>% 
+  mutate(percentage = (n / nrow(tidied_Linkedin))*100)
+
+frequent_nontechnical_skill$percentage <- as.numeric(format(round(frequent_nontechnical_skill$percentage,2),nsmall =2))
+
+datatable(frequent_nontechnical_skill, colnames = c('Skill', 'Count', 'Percentage'))
+```
+
+# Data Visualization {.tabset}
+
+## General Skills
+
+```{r, warning=FALSE}
+library(ggplot2)
+frequent_general_skill %>% 
+    arrange(desc(percentage)) %>%
+    slice(1:10) %>%
+    ggplot(., aes(x = reorder(skill, percentage), y = percentage)) +
+  geom_bar(stat = 'identity', skill= "blue" , fill = 'lightblue') +
+  coord_flip() + ggtitle("Top 10 General Skills") +
+  theme(plot.title = element_text(hjust = 0.5)) +
+  ylab("Percentage of Skill in Job Posting") +
+  xlab("Skill")
+```
+
+## Technical Skills
+
+```{r, warning=FALSE}
+frequent_technical_skill %>% 
+    arrange(desc(percentage)) %>%
+    slice(1:10) %>%
+    ggplot(., aes(x = reorder(skill, percentage), y = percentage)) +
+  geom_bar(stat = 'identity', skill= "blue" , fill = 'lightblue') +
+  coord_flip() + ggtitle("Top 10 Technical Skills") +
+  theme(plot.title = element_text(hjust = 0.5)) +
+  ylab("Percentage of Skill in Job Posting") +
+  xlab("Skill")
+```
+
+## Programming Languages
+
+```{r, warning=FALSE}
+frequent_programming_skill %>% 
+    arrange(desc(percentage)) %>%
+    slice(1:10) %>%
+    ggplot(., aes(x = reorder(skill, percentage), y = percentage)) +
+  geom_bar(stat = 'identity', skill= "blue" , fill = 'lightblue') +
+  coord_flip() + ggtitle("Top 10 Programming Languages") +
+  theme(plot.title = element_text(hjust = 0.5)) +
+  ylab("Percentage of Skill in Job Posting") +
+  xlab("Skill")
+```
+
+## Non-Technical Skills
+
+```{r, warning=FALSE}
+frequent_nontechnical_skill %>% 
+    arrange(desc(percentage)) %>%
+    slice(1:10) %>%
+    ggplot(., aes(x = reorder(skill, percentage), y = percentage)) +
+  geom_bar(stat = 'identity', skill= "blue" , fill = 'lightblue') +
+  coord_flip() + ggtitle("Top 10 Non-Technical Skills") +
+  theme(plot.title = element_text(hjust = 0.5)) +
+  ylab("Percentage of Skill in Job Posting") +
+  xlab("Skill")
+```
+
+# Analysis of job postings by State
+
+The top three state that has the most job postings related to data science are California, New York, and Texas.
+
+```{r, message=FALSE}
+library(plotly)
+
+#Filter out the rows with the city and state value "United States" because we don't want to report on those
+Postings_by_state <- tidied_Linkedin %>% filter(City != "United States")
+Postings_by_state <- Postings_by_state %>% filter(State != "United States")
+
+
+# Count the job listings for the available states in the dataset
+JobMapDF <- Postings_by_state %>% group_by(State) %>% dplyr::summarize (n = n())
+
+JobMapDF$hover <- with(JobMapDF, paste(State, '<br>', "# of Jobs:", n))
+
+g <- list(
+  resolution = 110,
+  showsubunits = T,
+  subunitcolor = '#4b0082',
+  scope = 'usa',
+  showcountries = T,
+  countrycolor = '#4b0082',
+  projection = list(type = 'albers usa'),
+  showlakes = TRUE,
+  lakecolor = '#bb99ff',
+  showland = TRUE,
+  landcolor = toRGB("#eee6ff")
+)
+
+# plot the map
+map <- plot_geo(JobMapDF, locationmode = 'USA-states') %>%
+  add_trace(
+    z = ~n, text = ~hover, locations = ~State,
+    color = ~n, colors = 'Purples'
+  ) %>%
+  colorbar(title = "Jobs Counts") %>%
+  layout(
+    title = 'Data Scientist Jobs Postings Analyzed by State',
+    geo = g
+  )
+map
+
+```
+
+# 
+
+```{r}
+library(stringr)
+all_skills <- tidied_Linkedin[c("Titile","Description")]
+
+all_skills$Titile[grep("(?i)data analyst", all_skills$Titile)] <- "Data Analyst"
+all_skills$Titile[grep("(?i)engineer", all_skills$Titile)] <- "Data Engineer"
+all_skills$Titile[grep("(?i)data science", all_skills$Titile)] <- "Data Scientist"
+all_skills$Titile[grep("(?i)scientist", all_skills$Titile)] <- "Data Scientist"
+all_skills$Titile[grep("(?i)business", all_skills$Titile)] <- "Business Analyst"
+all_skills$Titile[grep("(?i)data", all_skills$Titile)] <- "Data Analyst"
+
+
+skills <- c("(?i)Statistical analysis","(?i)Machine Learning","(?i)data visual","(?i)wrangling","(?i)mathematics","(?i)programming|scripting language","(?i)statistics","(?i)big data","(?i)Artificial intelligence|\\bAI\\b","(?i)Deep learning","(?i)data modeling","(?i)data processing","(?i)data mananagement","(?i)data manipulation","(?i)database","(?i)data architecture","(?i)data mining","(?i)research","(?i)modeling","(?i)analysis","(?i)cloud computing","(?i)technical","(?i)spss","(?i)stata", "(?i)sas","(?i)scala","(?i)matlab", "(?i)Swift", "(?i)Julia","(?i)Hadoop","(?i)Spark","(?i)Pig","(?i)Tableau","(?i)REDCap", "(?i)Qualtrics", "(?i)Power BI", "(?i)Dedoose", "(?i)Atlas TI", "(?i)NVivo", "(?i)MPlus", "(?i)Mixor", "(?i)dbt", "(?i)BigQuery|big query", "(?i)Superset", "(?i)Baseten", "(?i)Airflow","(?i)ETL/ELT pipelines","(?i)Google Analytics", "(?i)Parse.ly", "(?i)Chartbeat","(?i)Excel", "(?i)Plotly", "(?i)Google Data Studio", "(?i)Looker","(?i)Spotfire","(?i)Smartsheet","(?i)\\bBI\\b|Business Intelligence","(?i)C#|C#.net","(?i)VBA")
+
+for(i in skills ){
+  all_skills[i] <- +str_detect(apply(all_skills, 1, paste0, collapse = " ", ignore_case = TRUE), skills[which(skills == i)])
+}
+
+more_skills <- c("(?i)DevOps","(?i)python", "(?i)java", "(?i)javascript", "(?i)sql", "(?i)\\bR\\b", "(?i)stata","(?i)scala","(?i)matlab", "(?i)\\bC\\b","(?i)\\bC++\\b", "(?i)Swift", "(?i)Julia","(?i)Hadoop","(?i)Spark","(?i)Pig","\\bGo\\b","(?i)Kotlin","(?i)PHP","(?i)C#|C#.net","(?i)Ruby","(?i)TypeScript","(?i)HTML","(?i)CSS","(?i)NOSQL","(?i)Rust","(?i)Perl","(?i)Alteryx","(?i)communicate|communication", "(?i)critical thinking|critical-thinking", "(?i)problem solving|problem-solving", "(?i)business acumen", "(?i)storytell|data narrative", "(?i)adaptability","(?i)team player|team spirit", "(?i)product understanding","(?i)innovation","(?i)collaboration","(?i)visualization","(?i)attention","(?i)interpersonal","(?i)detail","(?i)presentation","(?i)multitask","(?i)decision making|decision-making","(?i)accuracy", "(?i)organization|organized","(?i)time management")
+
+for(i in more_skills ){
+  all_skills[i] <- +str_detect(apply(all_skills, 1, paste0, collapse = " ", ignore_case = TRUE), more_skills[which(more_skills == i)])
+}
+
+colnames(all_skills) <- c("Job_Title","Job_Description","Statistical analysis","Machine Learning","data visual","wrangling","mathematics","programming","statistics","big data","Artificial intelligence","Deep learning","data modeling","data processing","data mananagement","data manipulation","database","data architecture","data mining","research","modeling","analysis","cloud computing","technical","SPSS","Stata", "SAS","Scala","MATLAB", "Swift", "Julia","Hadoop","Spark","Pig","Tableau","REDCap", "Qualtrics", "Power BI", "Dedoose", "Atlas TI", "NVivo", "MPlus", "Mixor", "dbt", "BigQuery|big query", "Superset", "Baseten", "Airflow","ETL/ELT pipelines","Google Analytics", "Parse.ly", "Chartbeat","Excel", "Plotly", "Google Data Studio", "Looker","Spotfire","Smartsheet","Business Intelligence","C#|C#.net","VBA","DevOps","Python", "Java", "JavaScript", "SQL", "R", "C","C++","Go","Kotlin","PHP","Ruby","TypeScript","HTML","CSS","NOSQL","Rust","Perl","Alteryx","communication", "critical thinking", "problem-solving", "business acumen", "data narrative", "adaptability","team player", "product understanding","innovation","collaboration","visualization","attention","interpersonal","detail","presentation","multitask","decision-making","accuracy", "organization","time management")
+
+all_skills_long_table <- all_skills %>% 
+  pivot_longer(cols = !c("Job_Title","Job_Description"), names_to = "skill", values_to = "count" )
+
+job_title <- all_skills_long_table[c("Job_Title","skill","count")] %>% 
+  filter(count == 1)
+
+job_title <- job_title  %>% 
+   group_by(Job_Title,skill) %>%
+   mutate(count= sum(count))
+
+
+```
+
+# Conclusion
+
+As shown in the tables/graphs, we can see that 'analysis', 'database', and, 'technical' were the most common 'general' skills found in the job postings that we scraped.
+If we look under the technical skills umbrella we can see that Excel, Business Intelligence, and Scala are the top 3 most frequently cited skills, which is surprising considering that Tableau was also in this group and did not make the top 3.
+The non-technical skills umbrella shows that communication was far and above the most cited skill followed by organization and detail-oriented.
+Communication coming in as top 1 is not surprising at all.
+
+Limitations Originally, we had over 7000 job postings from Linkedin.
+However, due to duplicity of the job postings, we used only 1342 job postings for our analysis.
+A larger data set can further confirm the most valued skills in data science.
+
+# Sources
+
+<https://stackoverflow.com/questions/73640981/using-grep-on-multiple-columns-to-create-new-variable-in-r>
+
+<https://stackoverflow.com/questions/44530029/how-to-ignore-case-when-using-str-detect>
