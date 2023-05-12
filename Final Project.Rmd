@@ -1,0 +1,342 @@
+---
+title: "DATA 607 Final Project"
+author: "Susanna Wong"
+date: "2023-04-30"
+output: 
+  html_document:
+    theme: cerulean
+    toc: true
+    toc_float: true
+editor_options: 
+  markdown: 
+    wrap: sentence
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Introduction
+
+# Data {.tabset}
+
+Crime Data: Use publicly available crime data from the New York City Open Data.
+The data includes information such as the type of crime, the location of the crime, the date of the crime, information of perpetrators.
+
+NY Borough Population Size: Webscrap population size of each NY borough from CityPopulation. The website contains the population of each NY borough according to census results.
+https://www.citypopulation.de/en/usa/newyorkcity/
+
+## NYC Open Data
+
+| Column Name            | Description                                                                                                                                                          | Data Type |
+|-------------------|--------------------------------|----------------------|
+| ARREST_KEY             | Randomly generated persistent ID for each arrest                                                                                                                     | int       |
+| ARREST_DATE            | Exact date of arrest for the reported event                                                                                                                          | chr       |
+| PD_CD                  | Three digit internal classification code (more granular than Key Code)                                                                                               | int       |
+| PD_DESC                | Description of internal classification corresponding with PD code (more granular than Offense Description)                                                           | chr       |
+| KY_CD                  | Three digit internal classification code (more general category than PD code)                                                                                        | int       |
+| OFNS_DESC              | Description of internal classification corresponding with KY code (more general category than PD description)                                                        | chr       |
+| LAW_CODE               | Law code charges corresponding to the NYS Penal Law, VTL and other various local laws                                                                                | chr       |
+| LAW_CAT_CD             | Level of offense: felony, misdemeanor, violation                                                                                                                     | chr       |
+| ARREST_BORO            | Borough of arrest. B(Bronx), S(Staten Island), K(Brooklyn), M(Manhattan), Q(Queens)                                                                                  | chr       |
+| ARREST_PRECINCT        | Precinct where the arrest occurred                                                                                                                                   | int       |
+| JURISDICTION_CODE      | Jurisdiction responsible for arrest. Jurisdiction codes 0(Patrol), 1(Transit) and 2(Housing) represent NYPD whilst codes 3 and more represent non NYPD jurisdictions | int       |
+| AGE_GROUP              | Perpetrator's age within a category                                                                                                                                  | chr       |
+| PERP_SEX               | Perpetrator's sex description                                                                                                                                        | chr       |
+| PERP_RACE              | Perpetrator's race description                                                                                                                                       | chr       |
+| X_COORD_CD             | Midblock X-coordinate for New York State Plane Coordinate System, Long Island Zone, NAD 83, units feet (FIPS 3104)                                                   | int       |
+| Y_COORD_CD             | Midblock Y-coordinate for New York State Plane Coordinate System, Long Island Zone, NAD 83, units feet (FIPS 3104)                                                   | int       |
+| Latitude               | Latitude coordinate for Global Coordinate System, WGS 1984, decimal degrees (EPSG 4326)                                                                              | num       |
+| Longitude              | Longitude coordinate for Global Coordinate System, WGS 1984, decimal degrees (EPSG 4326)                                                                             | num       |
+| Lon_Lat                | Georeferenced Point Column based on Longitude and Latitude fields                                                                                                    | chr       |
+| Zip.Codes              | Zip code of arrest                                                                                                                                                   | int       |
+| Community.Districts    |                                                                                                                                                                      | int       |
+| Borough.Boundaries     |                                                                                                                                                                      | int       |
+| City.Council.Districts |                                                                                                                                                                      | int       |
+| Police.Precincts       |                                                                                                                                                                      | int       |
+
+```{r}
+data_2022 <- read.csv("https://raw.githubusercontent.com/suswong/DATA-607-Final-Project/main/NYPD_Arrests_Data__Historic_-2022.csv", header = T, na.strings = "NA")
+
+data_2021 <- read.csv("https://raw.githubusercontent.com/suswong/DATA-607-Final-Project/main/NYPD_Arrests_Data__Historic_-2021.csv", header = T, na.strings = "NA")
+
+data_2020 <- read.csv("https://raw.githubusercontent.com/suswong/DATA-607-Final-Project/main/NYPD_Arrests_Data__Historic_-2020.csv", header = T, na.strings = "NA")
+
+data_2019 <- read.csv("https://raw.githubusercontent.com/suswong/DATA-607-Final-Project/main/NYPD_Arrests_Data__Historic_-2019.csv", header = T, na.strings = "NA")
+
+data_2018 <- read.csv("https://raw.githubusercontent.com/suswong/DATA-607-Final-Project/main/NYPD_Arrests_Data__Historic_2018.csv", header = T, na.strings = "NA")
+
+data_2018_2022 <- rbind(data_2018,data_2019,data_2020,data_2021,data_2022)
+```
+
+## NY Population
+
+```{r}
+library(rvest)
+web = read_html("https://www.citypopulation.de/en/usa/newyorkcity/")
+HTML_df <- html_table(web) 
+population <- HTML_df[[1]]
+
+library(DT)
+datatable(population)
+```
+
+# Tidying Data {.tabset}
+
+## NYC Arrest Data {.tabset}
+
+Below are some of things that needs to be tidied for the analysis:
+
+-   Remove columns that are not needed in the analysis
+
+-   Rename values in the 'ARREST_BORO' column
+
+-   Change format of 'ARREST_DATE' to date format
+
+-   Missing values
+
+### Remove columns
+
+Use `str()` to check the structure of each dataset.
+
+We do not need the following columns in our analysis:
+
+-   ARREST_KEY
+
+-   PD_CD
+
+-   KY_CD
+
+-   LAW_CODE
+
+-   ARREST_PRECINCT
+
+-   JURISDICTION_CODE
+
+-   Community.Districts
+
+-   Borough.Boundaries
+
+-   City.Council.Districts
+
+-   Police.Precincts
+
+```{r}
+str(data_2018_2022)
+
+library(dplyr)
+data_2018_2022 <- data_2018_2022 %>%
+  select(-ARREST_KEY,-KY_CD, -PD_CD, -LAW_CODE, -ARREST_PRECINCT, -JURISDICTION_CODE, -Community.Districts, -Borough.Boundaries, -City.Council.Districts, -Police.Precincts)
+
+```
+
+### Rename Values in 'ARREST_BORO'
+
+The 'ARREST_BORO' column contains the borough in which the arrest was made.
+However, those values are in abbreviation.
+
+```{r}
+data_2018_2022$ARREST_BORO[grep("B", data_2018_2022$ARREST_BORO)] <- "Bronx"
+data_2018_2022$ARREST_BORO[grep("K", data_2018_2022$ARREST_BORO)] <- "Brooklyn"
+data_2018_2022$ARREST_BORO[grep("M", data_2018_2022$ARREST_BORO)] <- "Manhattan"
+data_2018_2022$ARREST_BORO[grep("Q", data_2018_2022$ARREST_BORO)] <- "Queens"
+data_2018_2022$ARREST_BORO[grep("S", data_2018_2022$ARREST_BORO)] <- "Staten Island"
+```
+
+### Change format of 'ARREST_DATE'
+
+The 'ARREST_DATE' needs to be converted to date format.
+
+```{r}
+data_2018_2022$ARREST_DATE <- as.Date(data_2018_2022$ARREST_DATE, format = "%m/%d/%Y" )
+
+data_2018_2022$YEAR <- as.numeric(format(data_2018_2022$ARREST_DATE,'%Y'))
+```
+
+### Missing Values
+
+Use `colSums(is.na())` to check for missing values.
+There are 2093 missing values in the 'Zip.Codes' column.
+
+```{r}
+colSums(is.na(data_2018_2022))
+
+data_2018_2022 <- data_2018_2022[complete.cases(data_2018_2022),]
+
+data_2018_2022 <- data_2018_2022 %>%
+  filter(OFNS_DESC !="") %>%
+  filter(OFNS_DESC != "(null)")
+
+colSums(is.na(data_2018_2022))
+```
+
+### Duplicates
+
+Check for duplicates
+
+```{r}
+distinct(data_2018_2022)
+```
+
+## NY Population by Borough {.tabset}
+
+To calculate the crime rate by borough, we need the population of each borough.
+We will only need the population census in 2020.
+
+Below are some of things that needs to be tidied for the analysis:
+
+-   Remove columns that are not needed in the analysis
+
+-   Rename column labels
+
+-   Change format of the population column to numeric
+
+### Remove columns
+
+```{r}
+population_boro <- population[, -c(2:5,7:8)] #Removes the other years' population size except for 2020
+
+population_boro <- as.data.frame(population_boro)
+datatable(population_boro)
+```
+
+### Rename Column and Values
+
+```{r}
+colnames(population_boro) <- c("Borough", "Population_Census_2020")
+population_boro$Borough[grep("Bronx", population_boro$Borough)] <- "Bronx"
+population_boro$Borough[grep("Brooklyn", population_boro$Borough)] <- "Brooklyn"
+population_boro$Borough[grep("Staten Island", population_boro$Borough)] <- "Staten Island"
+population_boro$Borough[grep("Manhattan", population_boro$Borough)] <- "Manhattan"
+
+str(population_boro)
+
+population_boro$Population_Census_2020 <- as.numeric(gsub(",","",population_boro$Population_Census_2020))
+
+```
+
+# Analysis {.tabset}
+
+## Top 10 Offenses in NY {.tabset}
+
+### Datatable
+```{r}
+library(ggplot2)
+
+offense <- data_2018_2022 %>%
+  group_by(OFNS_DESC) %>%
+  summarise(count = n())
+
+datatable(offense)
+
+
+```
+
+### Visualization
+
+```{r}
+offense %>% 
+    arrange(desc(count)) %>%
+    slice(1:10) %>%
+    ggplot(., aes(x=reorder(OFNS_DESC, count), y=count))+
+              geom_bar(stat='identity', fill="blue") + coord_flip() + xlab("Offense")+ ylab("Count") +  
+  ggtitle("Top 10 Offense in NY")
+```
+
+## Crime Rate by Borough and Year {.tabset}
+
+Calculate the crime rate for each borough by dividing the number of arrests in each borough by its population. This will allow us to compare crime rates on an equal basis across different boroughs. 
+
+### Datatable
+
+```{r}
+# Count the number of arrests in each borough by year
+borough_by_year <- data_2018_2022 %>%
+  group_by(YEAR, ARREST_BORO) %>%
+  summarise(count = n()) 
+
+# Create a new column for the population size for each borough
+borough_by_year$population <- 
+  with(borough_by_year, ifelse(ARREST_BORO == "Brooklyn", population_boro[2,2],
+                         ifelse(ARREST_BORO == "Bronx", population_boro[1,2],
+                        ifelse(ARREST_BORO == "Queens", population_boro[4,2],
+                         ifelse(ARREST_BORO == "Manhattan", population_boro[3,2],population_boro[5,2]      )))))
+
+# Rename column names
+colnames(borough_by_year) <- c("Year" ,"Borough", "count", "population")
+
+# Calculate the crime rate per year and borough
+borough_by_year <- borough_by_year %>%
+  mutate(crime_rate = (count/population)*1000)
+
+datatable(borough_by_year)
+```
+
+### Visualization
+
+```{r}
+ggplot(borough_by_year, aes(fill=Borough, y= crime_rate, x=Year)) + 
+  ggtitle("Crime Rate Per Borough and Year") + theme(plot.title=element_text(hjust=0.5))+
+  theme(axis.text.x=element_text(angle=45,hjust=1)) +
+    geom_bar(position="dodge", stat="identity") 
+# + scale_y_continuous(labels = scales::percent) 
+```
+
+```{r}
+crime_by_borough <- data_2018_2022 %>%
+  group_by(OFNS_DESC,ARREST_BORO) %>%
+  summarise(count = n()) 
+
+crime_by_borough$population <- 
+  with(crime_by_borough, ifelse(ARREST_BORO == "Brooklyn", population_boro[2,2],
+                         ifelse(ARREST_BORO == "Bronx", population_boro[1,2],
+                        ifelse(ARREST_BORO == "Queens", population_boro[4,2],
+                         ifelse(ARREST_BORO == "Manhattan", population_boro[3,2],population_boro[5,2]      )))))
+
+crime_by_borough <- crime_by_borough %>%
+  group_by(ARREST_BORO) %>%
+  mutate(offense_rate = (count/sum(count)))
+
+# crime_by_borough <- crime_by_borough %>%
+#   filter(crime_rate > 5000)
+  
+```
+
+### Top Offense Per Borough
+```{r}
+#install.packages("gganimate")
+#install.packages("gifski")
+
+library(gganimate)
+library(gifski)
+
+
+p <- crime_by_borough %>%
+  arrange(desc(offense_rate)) %>%
+  group_by(ARREST_BORO) %>%
+  slice(1:10) %>%
+    ggplot(., aes(x = reorder(OFNS_DESC, offense_rate),
+                                                 y = offense_rate,
+                                                 fill = ARREST_BORO)) + 
+    geom_bar(stat = "identity", show.legend = FALSE) +
+    labs(title = "") +
+    coord_flip()  + 
+    xlab("Offense") +
+    ylab("Offense Rate")
+
+a <- p +
+    transition_states(ARREST_BORO, wrap = FALSE)
+animate(a, nframes = 5, fps = 1)
+```
+
+## Map Visusalization
+
+```{r}
+#install.packages("leaflet")
+library("leaflet")
+
+leaflet() %>% 
+  addTiles() %>%
+  addCircleMarkers(lng = data_2018_2022$Longitude, 
+                   lat = data_2018_2022$Latitude)
+```
